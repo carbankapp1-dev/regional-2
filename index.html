@@ -202,6 +202,72 @@
     background: white; border-radius: 14px; padding: 28px; text-align: center;
     color: #9ca3af; font-size: 13px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);
   }
+
+  .btn-img {
+    background: #22c55e;
+    color: white;
+    border: none;
+    padding: 9px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .btn-img:hover { background: #16a34a; }
+
+  /* ===== PRINT AREA (imagem regional) ===== */
+  #print-area {
+    position: fixed;
+    top: -9999px;
+    left: -9999px;
+    width: 1060px;
+    background: white;
+    padding: 28px 24px;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+  }
+  .pa-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 2.5px solid #0f1e45;
+  }
+  .pa-title { font-size: 18px; font-weight: 700; color: #0f1e45; }
+  .pa-sub { font-size: 12px; color: #6b7280; margin-top: 2px; }
+  .pa-columns { display: flex; gap: 14px; align-items: flex-start; }
+  .pa-col { flex: 1; min-width: 0; }
+  .pa-col-title {
+    background: #0f1e45; color: white; padding: 9px 10px;
+    font-size: 12.5px; font-weight: 700; text-align: center;
+    border-radius: 6px 6px 0 0;
+  }
+  .pa-col-meta {
+    background: #dbeafe; color: #0f1e45; padding: 5px 10px;
+    font-size: 11px; font-weight: 700; text-align: center;
+  }
+  .pa-table { width: 100%; border-collapse: collapse; }
+  .pa-table th {
+    background: #e5e7eb;
+    color: #0f1e45;
+    padding: 6px 8px;
+    font-size: 11px;
+    font-weight: 700;
+    text-align: center;
+  }
+  .pa-table th:first-child { text-align: left; }
+  .pa-table td {
+    padding: 5px 8px;
+    font-size: 11px;
+    border-bottom: 1px solid #e5e7eb;
+    text-align: center;
+    color: #374151;
+  }
+  .pa-table td:first-child { text-align: left; font-weight: 500; color: #111827; }
+  .pa-table .row-ferias td { background: #fef3c7; color: #d97706; font-style: italic; }
+  .pa-table .row-total td { background: #f0f4f8; font-weight: 700; border-top: 2px solid #d1d5db; color: #0f1e45; }
+  .pa-table .row-media td { background: #4ade80; font-weight: 700; color: #0f1e45; }
+  .pa-date { margin-top: 16px; font-size: 11px; color: #9ca3af; text-align: right; }
 </style>
 </head>
 <body>
@@ -230,7 +296,10 @@
         <div class="subtitle">Consolidado Rio Grande do Sul + Paraná</div>
       </div>
     </div>
-    <button class="btn-logout" onclick="doLogout()">Sair</button>
+    <div style="display:flex; gap:10px;">
+      <button class="btn-img" onclick="gerarImagem()">📷 Gerar Imagem</button>
+      <button class="btn-logout" onclick="doLogout()">Sair</button>
+    </div>
   </div>
 
   <div class="body-wrap">
@@ -248,6 +317,19 @@
 
     <div id="filiais-container"></div>
   </div>
+</div>
+
+<!-- ===== PRINT AREA ===== -->
+<div id="print-area">
+  <div class="pa-header">
+    <img src="apple-touch-icon.png" style="height:50px;width:auto;" alt="CarBank">
+    <div>
+      <div class="pa-title">CarBank — Regional</div>
+      <div class="pa-sub">Consolidado Rio Grande do Sul + Paraná</div>
+    </div>
+  </div>
+  <div class="pa-columns" id="pa-columns"></div>
+  <div class="pa-date" id="print-date"></div>
 </div>
 
 <script type="module">
@@ -449,6 +531,122 @@ FILIAIS.forEach(f => {
     renderAll();
   });
 });
+
+function buildPrintTable() {
+  const columnsEl = document.getElementById('pa-columns');
+  columnsEl.innerHTML = '';
+
+  // Coluna por filial
+  FILIAIS.forEach(f => {
+    const snap = regionalData[f.key];
+    const col = document.createElement('div');
+    col.className = 'pa-col';
+
+    if (!snap) {
+      col.innerHTML = `
+        <div class="pa-col-title">Coordenador(a): ${f.coordenador}</div>
+        <div class="pa-col-meta">Sem fechamento enviado</div>`;
+      columnsEl.appendChild(col);
+      return;
+    }
+
+    const registros = snap.registros || {};
+    const nomes = Object.values(registros)
+      .map(r => r.nome)
+      .sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
+    let rowsHtml = '';
+    nomes.forEach(nome => {
+      const row = Object.values(registros).find(r => r.nome === nome);
+      if (!row) return;
+      if (row.ferias === true) {
+        rowsHtml += `<tr class="row-ferias"><td>${nome}</td><td colspan="3" style="text-align:center;">Férias</td></tr>`;
+      } else {
+        rowsHtml += `<tr><td>${nome}</td><td>${row.ap ?? 0}</td><td>${row.pg ?? 0}</td><td>${row.dn ?? 0}</td></tr>`;
+      }
+    });
+
+    const t = snap.totals || {};
+    col.innerHTML = `
+      <div class="pa-col-title">Coordenador(a): ${snap.coordenador || f.coordenador}</div>
+      <div class="pa-col-meta">Quantidade de GCM: ${t.count ?? nomes.length}</div>
+      <table class="pa-table">
+        <thead><tr><th>GCM</th><th>Aprov.</th><th>Pagas</th><th>DN</th></tr></thead>
+        <tbody>
+          ${rowsHtml || '<tr><td colspan="4" style="text-align:center;">Sem registros</td></tr>'}
+          <tr class="row-total"><td>Total</td><td>${t.totalAp ?? 0}</td><td>${t.totalPg ?? 0}</td><td>${t.totalDn ?? 0}</td></tr>
+          <tr class="row-media"><td>Média</td><td>${t.mediaAp ?? '0.0'}</td><td>${t.mediaPg ?? '0.0'}</td><td>${t.mediaDn ?? '0.0'}</td></tr>
+        </tbody>
+      </table>`;
+    columnsEl.appendChild(col);
+  });
+
+  // Coluna Regional (consolidado)
+  let grandAp = 0, grandPg = 0, grandDn = 0, grandCount = 0;
+  let filialRowsHtml = '';
+  FILIAIS.forEach(f => {
+    const snap = regionalData[f.key];
+    if (!snap) return;
+    const t = snap.totals || {};
+    grandAp += t.totalAp || 0;
+    grandPg += t.totalPg || 0;
+    grandDn += t.totalDn || 0;
+    grandCount += t.count || 0;
+    filialRowsHtml += `<tr><td>${(snap.coordenador || f.coordenador).toUpperCase()}</td><td>${t.totalAp ?? 0}</td><td>${t.totalPg ?? 0}</td><td>${t.totalDn ?? 0}</td></tr>`;
+  });
+  const mediaApRegional = grandCount ? fmtMedia(grandAp / grandCount) : '0.0';
+  const mediaPgRegional = grandCount ? fmtMedia(grandPg / grandCount) : '0.0';
+  const mediaDnRegional = grandCount ? fmtMedia(grandDn / grandCount) : '0.0';
+
+  const colRegional = document.createElement('div');
+  colRegional.className = 'pa-col';
+  colRegional.innerHTML = `
+    <div class="pa-col-title">Regional</div>
+    <div class="pa-col-meta">Total de GCM: ${grandCount}</div>
+    <table class="pa-table">
+      <thead><tr><th>Coordenador</th><th>Aprov.</th><th>Pagas</th><th>DN</th></tr></thead>
+      <tbody>
+        ${filialRowsHtml || '<tr><td colspan="4" style="text-align:center;">Sem dados</td></tr>'}
+        <tr class="row-total"><td>Total</td><td>${grandAp}</td><td>${grandPg}</td><td>${grandDn}</td></tr>
+        <tr class="row-media"><td>Média</td><td>${mediaApRegional}</td><td>${mediaPgRegional}</td><td>${mediaDnRegional}</td></tr>
+      </tbody>
+    </table>`;
+  columnsEl.appendChild(colRegional);
+
+  document.getElementById('print-date').textContent = 'Gerado em: ' + new Date().toLocaleString('pt-BR');
+}
+
+async function gerarImagem() {
+  buildPrintTable();
+  const el = document.getElementById('print-area');
+  el.style.position = 'absolute';
+  el.style.top = '0';
+  el.style.left = '0';
+  el.style.zIndex = '-1';
+
+  const { default: html2canvas } = await import('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.esm.min.js').catch(() => ({ default: window.html2canvas }));
+  const canvas = await (window.html2canvas || html2canvas)(el, { scale: 2.5, backgroundColor: '#ffffff', useCORS: true });
+
+  el.style.position = 'fixed';
+  el.style.top = '-9999px';
+  el.style.left = '-9999px';
+
+  const dateStr = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
+  const link = document.createElement('a');
+  link.download = `carbank_regional_${dateStr}.png`;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+
+  canvas.toBlob(blob => {
+    if (navigator.canShare) {
+      const file = new File([blob], `carbank_regional_${dateStr}.png`, { type: 'image/png' });
+      if (navigator.canShare({ files: [file] })) {
+        navigator.share({ files: [file], title: 'CarBank Regional', text: '' }).catch(() => {});
+      }
+    }
+  }, 'image/png');
+}
+window.gerarImagem = gerarImagem;
 
 // ── PWA: Registra o Service Worker ──────────────────────────────────────────
 if ('serviceWorker' in navigator) {
