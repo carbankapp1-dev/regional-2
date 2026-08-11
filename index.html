@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Car Bank — Regional</title>
+<meta name="description" content="Painel Regional — Consolidado Rio Grande do Sul e Paraná">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f1e45">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+<link rel="icon" href="favicon.ico">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+    background: #f3f4f6;
+    color: #111827;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ===== LOGIN SCREEN ===== */
+  .login-screen {
+    display: none;
+    min-height: 100vh;
+    background: #000000;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .login-screen.active { display: flex; }
+  .login-card {
+    background: white;
+    border-radius: 20px;
+    padding: 40px 28px;
+    width: 100%;
+    max-width: 360px;
+    text-align: center;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+  }
+  .login-logo { margin-bottom: 16px; }
+  .login-logo img { height: 60px; width: auto; }
+  .login-title { font-size: 22px; font-weight: 800; color: #0f1e45; margin-bottom: 6px; }
+  .login-sub { font-size: 13px; color: #6b7280; margin-bottom: 24px; }
+  .login-input {
+    width: 100%;
+    padding: 14px 16px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 12px;
+    font-size: 16px;
+    text-align: center;
+    letter-spacing: 3px;
+    margin-bottom: 16px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .login-input:focus { border-color: #0f1e45; }
+  .btn-login {
+    width: 100%;
+    padding: 14px;
+    background: #0f1e45;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .btn-login:hover { background: #16295e; }
+  .login-error {
+    display: none;
+    color: #dc2626;
+    font-size: 13px;
+    margin-top: 12px;
+    font-weight: 600;
+  }
+  .login-error.show { display: block; }
+
+  /* ===== DASHBOARD SCREEN ===== */
+  .screen { display: none; min-height: 100vh; }
+  .screen.active { display: block; }
+
+  .header {
+    background: #0f1e45;
+    padding: 20px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .logo-area { display: flex; align-items: center; gap: 12px; }
+  .logo-area img { height: 44px; width: auto; border-radius: 8px; }
+  .logo-text { color: white; }
+  .logo-text .title { font-size: 15px; font-weight: 800; line-height: 1.2; }
+  .logo-text .subtitle { font-size: 12px; color: #9fb0d8; }
+  .btn-logout {
+    background: rgba(255,255,255,0.12);
+    color: white;
+    border: none;
+    padding: 9px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .btn-logout:hover { background: rgba(255,255,255,0.22); }
+
+  .body-wrap { max-width: 720px; margin: 0 auto; padding: 20px 16px 48px; }
+
+  .section-label {
+    font-size: 12px;
+    font-weight: 800;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 24px 0 10px;
+  }
+  .section-label:first-child { margin-top: 0; }
+
+  /* Consolidated summary card */
+  .summary-card {
+    background: white;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  .s-head, .s-row, .s-total, .s-media {
+    display: grid;
+    grid-template-columns: 1fr 62px 62px 62px;
+    gap: 4px;
+    padding: 12px 14px;
+    align-items: center;
+  }
+  .s-head { background: #0f1e45; }
+  .s-head .th { color: white; font-size: 12px; font-weight: 700; text-align: center; }
+  .s-head .th:first-child { text-align: left; }
+  .s-row { border-bottom: 1px solid #f3f4f6; }
+  .s-row:last-of-type { border-bottom: none; }
+  .s-row .td { font-size: 14px; text-align: center; }
+  .s-row .td:first-child { text-align: left; font-weight: 600; color: #111827; }
+  .s-row .td-ap { color: #1e40af; font-weight: 700; }
+  .s-row .td-pg { color: #15803d; font-weight: 700; }
+  .s-row .td-dn { color: #7c3aed; font-weight: 700; }
+  .s-total {
+    background: #f0f4f8;
+    border-top: 2px solid #e5e7eb;
+    font-weight: 700;
+    font-size: 14px;
+  }
+  .s-total .td:first-child { text-align: left; }
+  .s-total .td { text-align: center; }
+  .s-media {
+    background: #4ade80;
+    font-weight: 700;
+    font-size: 14px;
+    color: #0f1e45;
+  }
+  .s-media .td:first-child { text-align: left; }
+  .s-media .td { text-align: center; }
+
+  /* Per-filial coordinator table cards */
+  .table-card {
+    background: white;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    margin-bottom: 6px;
+  }
+  .t-head { background: #0f1e45; display: grid; grid-template-columns: 1fr 48px 48px 48px; gap: 4px; padding: 12px 14px; }
+  .th { color: white; font-size: 12px; font-weight: 700; text-align: center; }
+  .th:first-child { text-align: left; }
+  .t-row { display: grid; grid-template-columns: 1fr 48px 48px 48px; gap: 4px; padding: 10px 14px; border-bottom: 1px solid #f3f4f6; }
+  .t-row:last-of-type { border-bottom: none; }
+  .td { font-size: 13px; color: #374151; text-align: center; }
+  .td:first-child { text-align: left; font-weight: 500; color: #111827; }
+  .td-ap { color: #1e40af; font-weight: 700; }
+  .td-pg { color: #15803d; font-weight: 700; }
+  .td-dn { color: #7c3aed; font-weight: 700; }
+  .td-zero { color: #d1d5db; font-weight: 500; }
+  .td-ferias { color: #d97706; font-weight: 700; font-style: italic; }
+  .t-total {
+    display: grid; grid-template-columns: 1fr 48px 48px 48px; gap: 4px;
+    padding: 11px 14px; background: #f0f4f8; border-top: 2px solid #e5e7eb;
+    font-weight: 700; font-size: 13px;
+  }
+  .t-media {
+    display: grid; grid-template-columns: 1fr 48px 48px 48px; gap: 4px;
+    padding: 10px 14px; background: #4ade80; font-weight: 700; font-size: 13px; color: #0f1e45;
+  }
+
+  .filial-meta {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 8px;
+  }
+  .filial-name { font-size: 14px; font-weight: 700; color: #111827; }
+  .filial-updated { font-size: 11px; color: #9ca3af; }
+  .filial-empty {
+    background: white; border-radius: 14px; padding: 28px; text-align: center;
+    color: #9ca3af; font-size: 13px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== LOGIN SCREEN ===== -->
+<div class="login-screen active" id="screen-login">
+  <div class="login-card">
+    <div class="login-logo">
+      <img src="apple-touch-icon.png" alt="Car Bank Regional">
+    </div>
+    <div class="login-title">Acesso Regional</div>
+    <div class="login-sub">Digite a senha para acessar o painel</div>
+    <input type="password" class="login-input" id="inp-senha" autocomplete="new-password" placeholder="••••••" onkeydown="if(event.key==='Enter') doLogin()">
+    <button class="btn-login" onclick="doLogin()">Entrar</button>
+    <div class="login-error" id="login-error">❌ Senha incorreta. Tente novamente.</div>
+  </div>
+</div>
+
+<!-- ===== DASHBOARD SCREEN ===== -->
+<div class="screen" id="screen-dashboard">
+  <div class="header">
+    <div class="logo-area">
+      <img src="apple-touch-icon.png" alt="Car Bank Regional">
+      <div class="logo-text">
+        <div class="title">Car Bank — Regional</div>
+        <div class="subtitle">Consolidado Rio Grande do Sul + Paraná</div>
+      </div>
+    </div>
+    <button class="btn-logout" onclick="doLogout()">Sair</button>
+  </div>
+
+  <div class="body-wrap">
+    <div class="section-label">Regional — Consolidado</div>
+    <div class="summary-card">
+      <div class="s-head">
+        <div class="th">Coordenador</div>
+        <div class="th">Aprov.</div>
+        <div class="th">Pagas</div>
+        <div class="th">DN</div>
+      </div>
+      <div id="summary-rows"></div>
+      <div id="summary-footer"></div>
+    </div>
+
+    <div id="filiais-container"></div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCFoXH5uMSKvtcjx7jw3t0v8RxMw44Zi-Y",
+  authDomain: "regional-consolidado.firebaseapp.com",
+  databaseURL: "https://regional-consolidado-default-rtdb.firebaseio.com",
+  projectId: "regional-consolidado",
+  storageBucket: "regional-consolidado.firebasestorage.app",
+  messagingSenderId: "82015181451",
+  appId: "1:82015181451:web:0472525fb6e4336cc5928e"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+const SENHA_ADM = "@1234";
+
+const FILIAIS = [
+  { key: 'parana', nome: 'Paraná', coordenador: 'Marcela A de O Silva' },
+  { key: 'rioGrandeDoSul', nome: 'Rio Grande do Sul', coordenador: 'Tuana S. Schmitt' }
+];
+
+let regionalData = {};
+
+function showScreen(id) {
+  document.querySelectorAll('.screen, .login-screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function doLogin() {
+  const senha = document.getElementById('inp-senha').value;
+  if (senha === SENHA_ADM) {
+    document.getElementById('login-error').classList.remove('show');
+    document.getElementById('inp-senha').value = '';
+    showScreen('screen-dashboard');
+  } else {
+    document.getElementById('login-error').classList.add('show');
+  }
+}
+window.doLogin = doLogin;
+
+function doLogout() {
+  showScreen('screen-login');
+}
+window.doLogout = doLogout;
+
+function fmtMedia(n) {
+  return (Math.round(n * 10) / 10).toFixed(1);
+}
+
+function renderAll() {
+  renderSummary();
+  renderFiliais();
+}
+
+function renderSummary() {
+  const rowsEl = document.getElementById('summary-rows');
+  const footEl = document.getElementById('summary-footer');
+  rowsEl.innerHTML = '';
+
+  let grandAp = 0, grandPg = 0, grandDn = 0, grandCount = 0;
+  let hasAny = false;
+
+  FILIAIS.forEach(f => {
+    const snap = regionalData[f.key];
+    if (!snap) return;
+    hasAny = true;
+    const t = snap.totals || { totalAp: 0, totalPg: 0, totalDn: 0, count: 0 };
+    grandAp += t.totalAp || 0;
+    grandPg += t.totalPg || 0;
+    grandDn += t.totalDn || 0;
+    grandCount += t.count || 0;
+
+    const row = document.createElement('div');
+    row.className = 's-row';
+    row.innerHTML = `
+      <div class="td">${snap.coordenador || f.coordenador}</div>
+      <div class="td td-ap">${t.totalAp ?? 0}</div>
+      <div class="td td-pg">${t.totalPg ?? 0}</div>
+      <div class="td td-dn">${t.totalDn ?? 0}</div>`;
+    rowsEl.appendChild(row);
+  });
+
+  if (!hasAny) {
+    rowsEl.innerHTML = `<div style="padding:24px;text-align:center;color:#9ca3af;font-size:13px;">Nenhum fechamento recebido ainda.</div>`;
+    footEl.innerHTML = '';
+    return;
+  }
+
+  const mediaAp = grandCount ? fmtMedia(grandAp / grandCount) : '0.0';
+  const mediaPg = grandCount ? fmtMedia(grandPg / grandCount) : '0.0';
+  const mediaDn = grandCount ? fmtMedia(grandDn / grandCount) : '0.0';
+
+  footEl.innerHTML = `
+    <div class="s-total">
+      <div class="td">Total</div>
+      <div class="td">${grandAp}</div>
+      <div class="td">${grandPg}</div>
+      <div class="td">${grandDn}</div>
+    </div>
+    <div class="s-media">
+      <div class="td">Média</div>
+      <div class="td">${mediaAp}</div>
+      <div class="td">${mediaPg}</div>
+      <div class="td">${mediaDn}</div>
+    </div>`;
+}
+
+function renderFiliais() {
+  const container = document.getElementById('filiais-container');
+  container.innerHTML = '';
+
+  FILIAIS.forEach(f => {
+    const snap = regionalData[f.key];
+
+    const label = document.createElement('div');
+    label.className = 'section-label';
+    label.textContent = `${f.nome} — Coordenador(a): ${f.coordenador}`;
+    container.appendChild(label);
+
+    if (!snap) {
+      const empty = document.createElement('div');
+      empty.className = 'filial-empty';
+      empty.textContent = 'Nenhum fechamento recebido ainda desta filial.';
+      container.appendChild(empty);
+      return;
+    }
+
+    const meta = document.createElement('div');
+    meta.className = 'filial-meta';
+    meta.innerHTML = `<span class="filial-updated">Último fechamento: ${snap.dataHora || '—'}</span>`;
+    container.appendChild(meta);
+
+    const card = document.createElement('div');
+    card.className = 'table-card';
+
+    const registros = snap.registros || {};
+    const nomes = Object.values(registros)
+      .map(r => r.nome)
+      .sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
+    let rowsHtml = '';
+    nomes.forEach(nome => {
+      const row = Object.values(registros).find(r => r.nome === nome);
+      if (!row) return;
+      const isFerias = row.ferias === true;
+      if (isFerias) {
+        rowsHtml += `
+          <div class="t-row">
+            <div class="td">${nome}</div>
+            <div class="td td-ferias" style="grid-column: span 3;">Férias</div>
+          </div>`;
+      } else {
+        const apStyle = row.ap > 0 ? 'td-ap' : 'td-zero';
+        const pgStyle = row.pg > 0 ? 'td-pg' : 'td-zero';
+        const dnStyle = (row.dn ?? 0) > 0 ? 'td-dn' : 'td-zero';
+        rowsHtml += `
+          <div class="t-row">
+            <div class="td">${nome}</div>
+            <div class="td ${apStyle}">${row.ap ?? 0}</div>
+            <div class="td ${pgStyle}">${row.pg ?? 0}</div>
+            <div class="td ${dnStyle}">${row.dn ?? 0}</div>
+          </div>`;
+      }
+    });
+
+    const t = snap.totals || {};
+    card.innerHTML = `
+      <div class="t-head">
+        <div class="th">GCM</div>
+        <div class="th">Apr.</div>
+        <div class="th">Pagas</div>
+        <div class="th">DN</div>
+      </div>
+      ${rowsHtml || '<div style="padding:20px;text-align:center;color:#9ca3af;font-size:13px;">Sem registros</div>'}
+      <div class="t-total">
+        <div class="td">Total</div>
+        <div class="td">${t.totalAp ?? 0}</div>
+        <div class="td">${t.totalPg ?? 0}</div>
+        <div class="td">${t.totalDn ?? 0}</div>
+      </div>
+      <div class="t-media">
+        <div class="td">Média</div>
+        <div class="td">${t.mediaAp ?? '0.0'}</div>
+        <div class="td">${t.mediaPg ?? '0.0'}</div>
+        <div class="td">${t.mediaDn ?? '0.0'}</div>
+      </div>`;
+    container.appendChild(card);
+  });
+}
+
+FILIAIS.forEach(f => {
+  onValue(ref(db, 'fechamentos/' + f.key + '/ultimo'), snap => {
+    regionalData[f.key] = snap.val();
+    renderAll();
+  });
+});
+
+// ── PWA: Registra o Service Worker ──────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => console.log('✅ Service Worker registrado:', reg.scope))
+      .catch(err => console.warn('⚠️ SW não registrado:', err));
+  });
+}
+
+</script>
+</body>
+</html>
