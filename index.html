@@ -384,6 +384,18 @@ function fmtMedia(n) {
   return (Math.round(n * 10) / 10).toFixed(1);
 }
 
+function isFechamentoAnterior(dataHora) {
+  if (!dataHora) return false;
+  const dataParte = dataHora.split(',')[0].trim(); // "dd/mm/yyyy"
+  const partes = dataParte.split('/');
+  if (partes.length !== 3) return false;
+  const hoje = new Date();
+  const hojeStr = String(hoje.getDate()).padStart(2, '0') + '/' +
+                  String(hoje.getMonth() + 1).padStart(2, '0') + '/' +
+                  hoje.getFullYear();
+  return dataParte !== hojeStr;
+}
+
 function renderAll() {
   renderSummary();
   renderFiliais();
@@ -449,8 +461,11 @@ function renderFiliais() {
   FILIAIS.forEach(f => {
     const snap = regionalData[f.key];
 
+    const anterior = snap ? isFechamentoAnterior(snap.dataHora) : false;
+
     const label = document.createElement('div');
     label.className = 'section-label';
+    if (anterior) label.style.color = '#dc2626';
     label.textContent = `${f.nome} — Coordenador(a): ${f.coordenador}`;
     container.appendChild(label);
 
@@ -464,7 +479,8 @@ function renderFiliais() {
 
     const meta = document.createElement('div');
     meta.className = 'filial-meta';
-    meta.innerHTML = `<span class="filial-updated">Último fechamento: ${snap.dataHora || '—'}</span>`;
+    const avisoAnterior = anterior ? ' — Fechamento anterior' : '';
+    meta.innerHTML = `<span class="filial-updated"${anterior ? ' style="color:#dc2626;"' : ''}>Último fechamento: ${snap.dataHora || '—'}${avisoAnterior}</span>`;
     container.appendChild(meta);
 
     const card = document.createElement('div');
