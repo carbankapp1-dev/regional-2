@@ -84,22 +84,22 @@
   .screen.active { display: block; }
 
   .header {
-    background: #0f1e45;
+    background: #f3f4f6;
     padding: 20px 18px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
     gap: 12px;
+    border-bottom: 2.5px solid #0f1e45;
   }
   .logo-area { display: flex; align-items: center; gap: 12px; }
-  .logo-area img { height: 44px; width: auto; border-radius: 8px; }
-  .logo-text { color: white; }
-  .logo-text .title { font-size: 15px; font-weight: 800; line-height: 1.2; }
-  .logo-text .subtitle { font-size: 12px; color: #9fb0d8; }
+  .logo-area img { height: 40px; width: auto; }
+  .logo-text .title { font-size: 15px; font-weight: 800; line-height: 1.2; color: #0f1e45; }
+  .logo-text .subtitle { font-size: 12px; color: #6b7280; }
   .btn-logout {
-    background: rgba(255,255,255,0.12);
-    color: white;
+    background: #e5e7eb;
+    color: #374151;
     border: none;
     padding: 9px 16px;
     border-radius: 10px;
@@ -107,7 +107,7 @@
     font-weight: 700;
     cursor: pointer;
   }
-  .btn-logout:hover { background: rgba(255,255,255,0.22); }
+  .btn-logout:hover { background: #d1d5db; }
 
   .body-wrap { max-width: 720px; margin: 0 auto; padding: 20px 16px 48px; }
 
@@ -282,7 +282,7 @@
 <div class="login-screen active" id="screen-login">
   <div class="login-card">
     <div class="login-logo">
-      <img src="apple-touch-icon.png" alt="Car Bank Regional">
+      <img src="logo-carbank.png" alt="Car Bank Regional">
     </div>
     <div class="login-title">Acesso Regional</div>
     <div class="login-sub">Digite a senha para acessar o painel</div>
@@ -296,10 +296,10 @@
 <div class="screen" id="screen-dashboard">
   <div class="header">
     <div class="logo-area">
-      <img src="apple-touch-icon.png" alt="Car Bank Regional">
+      <img src="logo-carbank.png" alt="Car Bank Regional">
       <div class="logo-text">
         <div class="title" id="header-title">Car Bank — Regional</div>
-        <div class="subtitle">Consolidado Rio Grande do Sul + Ribeirão Preto</div>
+        <div class="subtitle">Consolidado Rio Grande do Sul - Ribeirão Preto</div>
       </div>
     </div>
     <div style="display:flex; gap:10px;">
@@ -328,10 +328,10 @@
 <!-- ===== PRINT AREA ===== -->
 <div id="print-area">
   <div class="pa-header">
-    <img src="apple-touch-icon.png" style="height:50px;width:auto;" alt="CarBank">
+    <img src="logo-carbank.png" style="height:50px;width:auto;" alt="CarBank">
     <div>
       <div class="pa-title" id="pa-title-text">CarBank — Regional</div>
-      <div class="pa-sub">Consolidado Rio Grande do Sul + Ribeirão Preto</div>
+      <div class="pa-sub">Consolidado Rio Grande do Sul - Ribeirão Preto</div>
     </div>
   </div>
   <div class="pa-columns" id="pa-columns"></div>
