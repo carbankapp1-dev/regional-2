@@ -202,6 +202,12 @@
     background: white; border-radius: 14px; padding: 28px; text-align: center;
     color: #9ca3af; font-size: 13px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);
   }
+  .btn-zerar-filial {
+    background: #fee2e2; color: #dc2626; border: none;
+    padding: 3px 10px; border-radius: 8px; font-size: 11px; font-weight: 700;
+    cursor: pointer; white-space: nowrap; font-family: inherit;
+  }
+  .btn-zerar-filial:hover { background: #fecaca; }
 
   .btn-img {
     background: #22c55e;
@@ -292,7 +298,7 @@
     <div class="logo-area">
       <img src="apple-touch-icon.png" alt="Car Bank Regional">
       <div class="logo-text">
-        <div class="title">Car Bank — Regional</div>
+        <div class="title" id="header-title">Car Bank — Regional</div>
         <div class="subtitle">Consolidado Rio Grande do Sul + Ribeirão Preto</div>
       </div>
     </div>
@@ -303,7 +309,7 @@
   </div>
 
   <div class="body-wrap">
-    <div class="section-label">Regional — Consolidado</div>
+    <div class="section-label" id="section-label-regional">Regional — Consolidado</div>
     <div class="summary-card">
       <div class="s-head">
         <div class="th">Coordenador</div>
@@ -324,7 +330,7 @@
   <div class="pa-header">
     <img src="apple-touch-icon.png" style="height:50px;width:auto;" alt="CarBank">
     <div>
-      <div class="pa-title">CarBank — Regional</div>
+      <div class="pa-title" id="pa-title-text">CarBank — Regional</div>
       <div class="pa-sub">Consolidado Rio Grande do Sul + Ribeirão Preto</div>
     </div>
   </div>
@@ -334,7 +340,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCFoXH5uMSKvtcjx7jw3t0v8RxMw44Zi-Y",
@@ -351,12 +357,18 @@ const db = getDatabase(app);
 
 const SENHA_ADM = "@1234";
 
+const REGIONAL_LABEL = "Regional 7 - Giovano";
+
 const FILIAIS = [
   { key: 'parana', nome: 'Ribeirão Preto', coordenador: 'Marcela A de O Silva' },
   { key: 'rioGrandeDoSul', nome: 'Rio Grande do Sul', coordenador: 'Tuana S. Schmitt' }
 ];
 
 let regionalData = {};
+
+document.getElementById('header-title').textContent = 'Car Bank — ' + REGIONAL_LABEL;
+document.getElementById('section-label-regional').textContent = REGIONAL_LABEL + ' — Consolidado';
+document.getElementById('pa-title-text').textContent = 'CarBank — ' + REGIONAL_LABEL;
 
 function showScreen(id) {
   document.querySelectorAll('.screen, .login-screen').forEach(s => s.classList.remove('active'));
@@ -379,6 +391,17 @@ function doLogout() {
   showScreen('screen-login');
 }
 window.doLogout = doLogout;
+
+async function zerarFilial(key, nome) {
+  if (!confirm(`Confirma zerar o fechamento recebido de ${nome}?\n\nIsso remove o último fechamento exibido no painel Regional (o histórico não é apagado). Use depois de já ter conferido/compartilhado a informação, para evitar exibir dados antigos por engano.`)) return;
+  try {
+    await remove(ref(db, 'fechamentos/' + key + '/ultimo'));
+  } catch (err) {
+    console.error('Erro ao zerar filial:', err);
+    alert('Erro ao zerar. Tente novamente.');
+  }
+}
+window.zerarFilial = zerarFilial;
 
 function fmtMedia(n) {
   return (Math.round(n * 10) / 10).toFixed(1);
@@ -480,7 +503,9 @@ function renderFiliais() {
     const meta = document.createElement('div');
     meta.className = 'filial-meta';
     const avisoAnterior = anterior ? ' — Fechamento anterior' : '';
-    meta.innerHTML = `<span class="filial-updated"${anterior ? ' style="color:#dc2626;"' : ''}>Último fechamento: ${snap.dataHora || '—'}${avisoAnterior}</span>`;
+    meta.innerHTML = `
+      <span class="filial-updated"${anterior ? ' style="color:#dc2626;"' : ''}>Último fechamento: ${snap.dataHora || '—'}${avisoAnterior}</span>
+      <button class="btn-zerar-filial" onclick="zerarFilial('${f.key}','${f.nome}')">🗑 Zerar</button>`;
     container.appendChild(meta);
 
     const card = document.createElement('div');
@@ -617,7 +642,7 @@ function buildPrintTable() {
   const colRegional = document.createElement('div');
   colRegional.className = 'pa-col';
   colRegional.innerHTML = `
-    <div class="pa-col-title">Regional</div>
+    <div class="pa-col-title">${REGIONAL_LABEL}</div>
     <div class="pa-col-meta">Total de GCM: ${grandCount}</div>
     <table class="pa-table">
       <thead><tr><th>Coordenador</th><th>Aprov.</th><th>Pagas</th><th>DN</th></tr></thead>
