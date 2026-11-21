@@ -1,5 +1,5 @@
 // Car Bank Regional PWA — Service Worker
-const CACHE_NAME = 'carbank-regional-v2';
+const CACHE_NAME = 'carbank-regional-v3';
 
 const ASSETS = [
   './',

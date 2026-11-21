@@ -208,6 +208,12 @@
     cursor: pointer; white-space: nowrap; font-family: inherit;
   }
   .btn-zerar-filial:hover { background: #fecaca; }
+  .btn-edit-coord {
+    background: #e0e7ff; color: #0f1e45; border: none; margin-left: 8px;
+    padding: 2px 8px; border-radius: 8px; font-size: 11px; font-weight: 700;
+    cursor: pointer; font-family: inherit; text-transform: none; letter-spacing: 0;
+  }
+  .btn-edit-coord:hover { background: #c7d2fe; }
 
   .btn-img {
     background: #22c55e;
@@ -343,7 +349,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, onValue, remove, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCFoXH5uMSKvtcjx7jw3t0v8RxMw44Zi-Y",
@@ -370,6 +376,34 @@ const FILIAIS = [
 ];
 
 let regionalData = {};
+
+// Nomes de coordenador alterados pela Regional (ficam salvos no banco)
+let coordOverride = {};
+onValue(ref(db, 'config/coordenadores'), snap => {
+  coordOverride = snap.val() || {};
+  renderAll();
+});
+
+function nomeCoord(f, snap) {
+  return coordOverride[f.key] || (snap && snap.coordenador) || f.coordenador;
+}
+
+async function editarCoordenador(key) {
+  const f = FILIAIS.find(x => x.key === key);
+  if (!f) return;
+  const atual = nomeCoord(f, regionalData[key]);
+  const novo = prompt(`Nome do coordenador(a) da filial ${f.nome}:\n(deixe em branco para voltar ao nome padrão)`, atual);
+  if (novo === null) return;
+  const nome = novo.trim();
+  try {
+    if (nome) await set(ref(db, 'config/coordenadores/' + key), nome);
+    else await remove(ref(db, 'config/coordenadores/' + key));
+  } catch (err) {
+    console.error('Erro ao salvar coordenador:', err);
+    alert('Erro ao salvar. Tente novamente.');
+  }
+}
+window.editarCoordenador = editarCoordenador;
 
 document.getElementById('header-title').textContent = 'Car Bank — ' + REGIONAL_LABEL;
 document.getElementById('section-label-regional').textContent = REGIONAL_LABEL + ' — Consolidado';
@@ -450,7 +484,7 @@ function renderSummary() {
     const row = document.createElement('div');
     row.className = 's-row';
     row.innerHTML = `
-      <div class="td">${f.nome}<div style="font-size:11px;color:#6b7280;font-weight:500;">${snap.coordenador || f.coordenador}</div></div>
+      <div class="td">${f.nome}<div style="font-size:11px;color:#6b7280;font-weight:500;">${nomeCoord(f, snap)}</div></div>
       <div class="td td-ap">${t.totalAp ?? 0}</div>
       <div class="td td-pg">${t.totalPg ?? 0}</div>
       <div class="td td-dn">${t.totalDn ?? 0}</div>`;
@@ -494,7 +528,13 @@ function renderFiliais() {
     const label = document.createElement('div');
     label.className = 'section-label';
     if (anterior) label.style.color = '#dc2626';
-    label.textContent = `${f.nome} — Coordenador(a): ${f.coordenador}`;
+    label.textContent = `${f.nome} — Coordenador(a): ${nomeCoord(f, snap)}`;
+    const btnEdit = document.createElement('button');
+    btnEdit.className = 'btn-edit-coord';
+    btnEdit.textContent = '✎ Editar';
+    btnEdit.title = 'Alterar nome do coordenador';
+    btnEdit.onclick = () => editarCoordenador(f.key);
+    label.appendChild(btnEdit);
     container.appendChild(label);
 
     if (!snap) {
@@ -592,7 +632,7 @@ function buildPrintTable() {
 
     if (!snap) {
       col.innerHTML = `
-        <div class="pa-col-title">Filial ${f.nome} — ${f.coordenador}</div>
+        <div class="pa-col-title">Filial ${f.nome} — ${nomeCoord(f, null)}</div>
         <div class="pa-col-meta">Sem fechamento enviado</div>`;
       columnsEl.appendChild(col);
       return;
@@ -616,7 +656,7 @@ function buildPrintTable() {
 
     const t = snap.totals || {};
     col.innerHTML = `
-      <div class="pa-col-title">Filial ${f.nome} — ${snap.coordenador || f.coordenador}</div>
+      <div class="pa-col-title">Filial ${f.nome} — ${nomeCoord(f, snap)}</div>
       <div class="pa-col-meta">Quantidade de GCM: ${t.count ?? nomes.length}</div>
       <table class="pa-table">
         <thead><tr><th>GCM</th><th>Aprov.</th><th>Pagas</th><th>DN</th></tr></thead>
@@ -640,7 +680,7 @@ function buildPrintTable() {
     grandPg += t.totalPg || 0;
     grandDn += t.totalDn || 0;
     grandCount += t.count || 0;
-    filialRowsHtml += `<tr><td>${f.nome} — ${(snap.coordenador || f.coordenador).toUpperCase()}</td><td>${t.totalAp ?? 0}</td><td>${t.totalPg ?? 0}</td><td>${t.totalDn ?? 0}</td></tr>`;
+    filialRowsHtml += `<tr><td>${f.nome} — ${(nomeCoord(f, snap)).toUpperCase()}</td><td>${t.totalAp ?? 0}</td><td>${t.totalPg ?? 0}</td><td>${t.totalDn ?? 0}</td></tr>`;
   });
   const mediaApRegional = grandCount ? fmtMedia(grandAp / grandCount) : '0.0';
   const mediaPgRegional = grandCount ? fmtMedia(grandPg / grandCount) : '0.0';
