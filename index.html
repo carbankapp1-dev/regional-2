@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Car Bank — Regional</title>
-<meta name="description" content="Painel Regional — Consolidado Rio Grande do Sul e Ribeirão Preto">
+<meta name="description" content="Painel Regional 2 — Consolidado Rio Grande do Sul - Blumenau - Florianópolis - Curitiba">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0f1e45">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -226,7 +226,7 @@
     position: fixed;
     top: -9999px;
     left: -9999px;
-    width: 1060px;
+    width: 1440px;
     background: white;
     padding: 28px 24px;
     font-family: 'Segoe UI', system-ui, sans-serif;
@@ -273,6 +273,8 @@
   .pa-table .row-ferias td { background: #fef3c7; color: #d97706; font-style: italic; }
   .pa-table .row-total td { background: #f0f4f8; font-weight: 700; border-top: 2px solid #d1d5db; color: #0f1e45; }
   .pa-table .row-media td { background: #4ade80; font-weight: 700; color: #0f1e45; }
+  .pa-regional { display: flex; gap: 14px; margin-top: 22px; }
+  .pa-regional .pa-col { flex: 0 0 calc(50% - 7px); }
   .pa-date { margin-top: 16px; font-size: 11px; color: #9ca3af; text-align: right; }
 </style>
 </head>
@@ -299,7 +301,7 @@
       <img src="logo-carbank.png" alt="Car Bank Regional">
       <div class="logo-text">
         <div class="title" id="header-title">Car Bank — Regional</div>
-        <div class="subtitle">Consolidado Rio Grande do Sul - Ribeirão Preto</div>
+        <div class="subtitle">Consolidado Rio Grande do Sul - Blumenau - Florianópolis - Curitiba</div>
       </div>
     </div>
     <div style="display:flex; gap:10px;">
@@ -312,7 +314,7 @@
     <div class="section-label" id="section-label-regional">Regional — Consolidado</div>
     <div class="summary-card">
       <div class="s-head">
-        <div class="th">Coordenador</div>
+        <div class="th">Filial</div>
         <div class="th">Aprov.</div>
         <div class="th">Pagas</div>
         <div class="th">DN</div>
@@ -331,10 +333,11 @@
     <img src="logo-carbank.png" style="height:50px;width:auto;" alt="CarBank">
     <div>
       <div class="pa-title" id="pa-title-text">CarBank — Regional</div>
-      <div class="pa-sub">Consolidado Rio Grande do Sul - Ribeirão Preto</div>
+      <div class="pa-sub">Consolidado Rio Grande do Sul - Blumenau - Florianópolis - Curitiba</div>
     </div>
   </div>
   <div class="pa-columns" id="pa-columns"></div>
+  <div class="pa-regional" id="pa-regional"></div>
   <div class="pa-date" id="print-date"></div>
 </div>
 
@@ -357,11 +360,13 @@ const db = getDatabase(app);
 
 const SENHA_ADM = "@1234";
 
-const REGIONAL_LABEL = "Regional 7 - Giovano";
+const REGIONAL_LABEL = "Regional 2 - Giovano";
 
 const FILIAIS = [
-  { key: 'parana', nome: 'Ribeirão Preto', coordenador: 'Marcela A de O Silva' },
-  { key: 'rioGrandeDoSul', nome: 'Rio Grande do Sul', coordenador: 'Tuana S. Schmitt' }
+  { key: 'rioGrandeDoSul', nome: 'Rio Grande do Sul', coordenador: 'Tuana S. Schmitt' },
+  { key: 'blumenau',       nome: 'Blumenau',          coordenador: 'TBT' },
+  { key: 'florianopolis',  nome: 'Florianópolis',     coordenador: 'Thiago A. de Castilhos' },
+  { key: 'curitiba',       nome: 'Curitiba',          coordenador: 'Diego de Avila Barbosa' }
 ];
 
 let regionalData = {};
@@ -445,7 +450,7 @@ function renderSummary() {
     const row = document.createElement('div');
     row.className = 's-row';
     row.innerHTML = `
-      <div class="td">${snap.coordenador || f.coordenador}</div>
+      <div class="td">${f.nome}<div style="font-size:11px;color:#6b7280;font-weight:500;">${snap.coordenador || f.coordenador}</div></div>
       <div class="td td-ap">${t.totalAp ?? 0}</div>
       <div class="td td-pg">${t.totalPg ?? 0}</div>
       <div class="td td-dn">${t.totalDn ?? 0}</div>`;
@@ -576,6 +581,8 @@ FILIAIS.forEach(f => {
 function buildPrintTable() {
   const columnsEl = document.getElementById('pa-columns');
   columnsEl.innerHTML = '';
+  const regionalEl = document.getElementById('pa-regional');
+  regionalEl.innerHTML = '';
 
   // Coluna por filial
   FILIAIS.forEach(f => {
@@ -585,7 +592,7 @@ function buildPrintTable() {
 
     if (!snap) {
       col.innerHTML = `
-        <div class="pa-col-title">Coordenador(a): ${f.coordenador}</div>
+        <div class="pa-col-title">Filial ${f.nome} — ${f.coordenador}</div>
         <div class="pa-col-meta">Sem fechamento enviado</div>`;
       columnsEl.appendChild(col);
       return;
@@ -609,7 +616,7 @@ function buildPrintTable() {
 
     const t = snap.totals || {};
     col.innerHTML = `
-      <div class="pa-col-title">Coordenador(a): ${snap.coordenador || f.coordenador}</div>
+      <div class="pa-col-title">Filial ${f.nome} — ${snap.coordenador || f.coordenador}</div>
       <div class="pa-col-meta">Quantidade de GCM: ${t.count ?? nomes.length}</div>
       <table class="pa-table">
         <thead><tr><th>GCM</th><th>Aprov.</th><th>Pagas</th><th>DN</th></tr></thead>
@@ -633,7 +640,7 @@ function buildPrintTable() {
     grandPg += t.totalPg || 0;
     grandDn += t.totalDn || 0;
     grandCount += t.count || 0;
-    filialRowsHtml += `<tr><td>${(snap.coordenador || f.coordenador).toUpperCase()}</td><td>${t.totalAp ?? 0}</td><td>${t.totalPg ?? 0}</td><td>${t.totalDn ?? 0}</td></tr>`;
+    filialRowsHtml += `<tr><td>${f.nome} — ${(snap.coordenador || f.coordenador).toUpperCase()}</td><td>${t.totalAp ?? 0}</td><td>${t.totalPg ?? 0}</td><td>${t.totalDn ?? 0}</td></tr>`;
   });
   const mediaApRegional = grandCount ? fmtMedia(grandAp / grandCount) : '0.0';
   const mediaPgRegional = grandCount ? fmtMedia(grandPg / grandCount) : '0.0';
@@ -645,14 +652,14 @@ function buildPrintTable() {
     <div class="pa-col-title">${REGIONAL_LABEL}</div>
     <div class="pa-col-meta">Total de GCM: ${grandCount}</div>
     <table class="pa-table">
-      <thead><tr><th>Coordenador</th><th>Aprov.</th><th>Pagas</th><th>DN</th></tr></thead>
+      <thead><tr><th>Filial — Coordenador</th><th>Aprov.</th><th>Pagas</th><th>DN</th></tr></thead>
       <tbody>
         ${filialRowsHtml || '<tr><td colspan="4" style="text-align:center;">Sem dados</td></tr>'}
         <tr class="row-total"><td>Total</td><td>${grandAp}</td><td>${grandPg}</td><td>${grandDn}</td></tr>
         <tr class="row-media"><td>Média</td><td>${mediaApRegional}</td><td>${mediaPgRegional}</td><td>${mediaDnRegional}</td></tr>
       </tbody>
     </table>`;
-  columnsEl.appendChild(colRegional);
+  regionalEl.appendChild(colRegional);
 
   document.getElementById('print-date').textContent = 'Gerado em: ' + new Date().toLocaleString('pt-BR');
 }

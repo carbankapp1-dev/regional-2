@@ -1,7 +1,7 @@
 {
   "name": "Car Bank Regional",
   "short_name": "Regional",
-  "description": "Painel Regional — Consolidado Rio Grande do Sul e Paraná",
+  "description": "Painel Regional 2 — Consolidado Rio Grande do Sul - Blumenau - Florianópolis - Curitiba",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#000000",
